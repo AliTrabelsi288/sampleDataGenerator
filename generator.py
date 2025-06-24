@@ -5,6 +5,7 @@ from faker import Faker
 def generator(*args):
     fake = Faker()
     sample_data = []
+    extracted_flags = set()
 
     # Default values
     min_num = 0
@@ -12,28 +13,44 @@ def generator(*args):
     generate_count = 0
     output_to_terminal = '-ot' in args
     output_to_json = '-oj' in args
+    valid_prefixes = ['-help', '-fn', '-sn', '-d', '-ip', '-r', '-tf', '-g', '-ot', '-oj']
 
     if not args:
         print("*** No Flags Provided, Use 'python generator.py -help' for a List of All Commands ***")
         return
+    
+    
+    for arg in args:
+        if arg.startswith('-'):
+            for prefix in valid_prefixes:
+                if arg.startswith(prefix):
+                    break
+            else:
+                extracted_flags.add(arg)
+
+    if extracted_flags:
+        print(f"*** Invalid Flag(s): {', '.join(extracted_flags)}  ***")
+        print("*** Use the '-help' Flag for a List of Valid Flags ***")
+        return
+
 
     # Help option
     if '-help' in args:
-        print("Flags and their actions:")
-        print({
-            '-help': 'show help',
-            '-fn': 'first name',
-            '-sn': 'surname',
-            '-d': 'date',
-            '-ip': 'IPv4 address',
-            '-r': 'random number range (e.g. -r10-20)',
-            '-tf': 'true/false',
-            '-g': 'number of records to generate (e.g. -g10)',
-            '-ot': 'output to terminal',
-            '-oj': 'output to JSON file'
-        })
-        print("Example usage: 'python generator.py -fn -sn -g10 -oj' will generate 10 records consisting of firstnames and surnames, will save to file in JSON format")
+        print("Flags and Their Actions:\n")
+        print("-help : Show Help")
+        print("-fn   : First Name")
+        print("-sn   : Surname")
+        print("-d    : Date")
+        print("-ip   : IPv4 Address")
+        print("-r    : Random Number Range (e.g. -r10-20)")
+        print("-tf   : True/False")
+        print("-g    : Number of Records to Generate (e.g. -g10)")
+        print("-ot   : Output to Terminal")
+        print("-oj   : Output to JSON File\n")
+        print("Example Minimal Usage:\n  python generator.py -fn -g10 -oj")
+        print("This Will Generate 10 Records with First Names and Save Them to a JSON File.")
         return
+
 
     # Parse generation count and number range
     for arg in args:
@@ -43,15 +60,17 @@ def generator(*args):
             try:
                 min_num, max_num = map(int, arg[2:].split('-'))
             except ValueError:
-                print("*** Invalid range for -r. Using default 0-1000 ***")
+                print("*** No Range for -r. Using Default 0-1000 ***")
 
     if generate_count == 0:
         print("*** Use the '-g' Flag Followed by a Number to Specify How Many Records to Produce ***")
         return
 
+
     # Generate the records
     for i in range(generate_count):
         entry = {}
+
         if '-fn' in args:
             entry["first_name"] = fake.first_name()
         if '-sn' in args:
@@ -64,16 +83,23 @@ def generator(*args):
             entry["true_false"] = fake.boolean()
         if '-ip' in args:
             entry["ipv4_address"] = fake.ipv4_private()
-        sample_data.append(entry)
+        
+        if entry:
+            sample_data.append(entry)
+        else:
+            print("*** Please Enter Schema Specifying Flags in Command ***")
+            return
+
 
     # Output
     if output_to_terminal:
         print(json.dumps(sample_data))
-    if output_to_json:
+    elif output_to_json:
         with open("data.json", "w") as f:
             json.dump(sample_data, f)
     else:
         print("*** Please Use the '-ot' or '-oj' Flags to Output Data ***")
+        return
 
 
 if __name__ == "__main__":
