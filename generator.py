@@ -18,21 +18,6 @@ def generator(*args):
     if not args:
         print("*** No Flags Provided, Use 'python generator.py -help' for a List of All Commands ***")
         return
-    
-    
-    for arg in args:
-        if arg.startswith('-'):
-            for prefix in valid_prefixes:
-                if arg.startswith(prefix):
-                    break
-            else:
-                extracted_flags.add(arg)
-
-    if extracted_flags:
-        print(f"*** Invalid Flag(s): {', '.join(extracted_flags)}  ***")
-        print("*** Use the '-help' Flag for a List of Valid Flags ***")
-        return
-
 
     # Help option
     if '-help' in args:
@@ -52,7 +37,7 @@ def generator(*args):
         return
 
 
-    # Parse generation count and number range
+    # Parse generation count, number range and valid prefixes
     for arg in args:
         if arg.startswith('-g') and arg[2:].isdigit():
             generate_count = int(arg[2:])
@@ -61,6 +46,17 @@ def generator(*args):
                 min_num, max_num = map(int, arg[2:].split('-'))
             except ValueError:
                 print("*** No Range for -r. Using Default 0-1000 ***")
+        elif arg.startswith('-'):
+            for prefix in valid_prefixes:
+                if arg.startswith(prefix):
+                    break
+            else:
+                extracted_flags.add(arg)
+
+    if extracted_flags:
+        print(f"*** Invalid Flag(s): {', '.join(extracted_flags)}  ***")
+        print("*** Use the '-help' Flag for a List of Valid Flags ***")
+        return
 
     if generate_count == 0:
         print("*** Use the '-g' Flag Followed by a Number to Specify How Many Records to Produce ***")
