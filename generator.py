@@ -1,92 +1,79 @@
 import sys
+import json
 from faker import Faker
 
 def generator(*args):
     fake = Faker()
-
     sample_data = []
 
+    # Default values
     min_num = 0
     max_num = 1000
     generate_count = 0
+    output_to_terminal = '-ot' in args
+    output_to_json = '-oj' in args
 
     if not args:
         print("*** No Flags Provided, Use 'python generator.py -help' for a List of All Commands ***")
         return
 
-    flags = {'-help' : 'help',
-             '-fn' : 'firstname',
-              '-sn' : 'surname',
-               '-d' : 'date',
-               '-ip' : 'ip',
-               '-r' : 'numbers (eg. -r10-20)',
-               '-tf' : 'true/false',
-               '-g' : 'generate (eg. -g10)',
-               '-ot' : 'terminal',
-               '-oj' : 'json'}
-    
+    # Help option
     if '-help' in args:
-            print(flags)
-            print("Example use: 'python generator.py -fn -g10 -ot'")
-            return
-    
+        print("Flags and their actions:")
+        print({
+            '-help': 'show help',
+            '-fn': 'first name',
+            '-sn': 'surname',
+            '-d': 'date',
+            '-ip': 'IPv4 address',
+            '-r': 'random number range (e.g. -r10-20)',
+            '-tf': 'true/false',
+            '-g': 'number of records to generate (e.g. -g10)',
+            '-ot': 'output to terminal',
+            '-oj': 'output to JSON file'
+        })
+        print("Example usage: 'python generator.py -fn -sn -g10 -oj' will generate 10 records consisting of firstnames and surnames, will save to file in JSON format")
+        return
 
+    # Parse generation count and number range
     for arg in args:
         if arg.startswith('-g') and arg[2:].isdigit():
             generate_count = int(arg[2:])
+        elif arg.startswith('-r'):
+            try:
+                min_num, max_num = map(int, arg[2:].split('-'))
+            except ValueError:
+                print("*** Invalid range for -r. Using default 0-1000 ***")
 
-        if arg.startswith('-r'):
-            range_str = arg[2:]
-            if '-' in range_str:
-                try:
-                    min_num, max_num = map(int, range_str.split('-'))       # map to split min/max values, convert to int and store in respected variables
-                except ValueError:
-                    print("*** Invalid range format for -r flag. Using default 0-1000 ***")
-
-    
     if generate_count == 0:
         print("*** Use the '-g' Flag Followed by a Number to Specify How Many Records to Produce ***")
         return
-    
 
+    # Generate the records
     for i in range(generate_count):
         entry = {}
-
         if '-fn' in args:
-            entry["first_name"] = first_name_generator(fake)
+            entry["first_name"] = fake.first_name()
         if '-sn' in args:
-            entry["surname"] = surname_generator(fake)
+            entry["surname"] = fake.last_name()
         if '-d' in args:
-            entry["date"] = date_generator(fake)
+            entry["date"] = fake.date()
         if any(arg.startswith('-r') for arg in args):
-            entry["number"] = random_number_generator(min_num, max_num, fake)
-        if 'tf' in args:
-            entry['true_false'] = true_false_generator(fake)
+            entry["number"] = fake.random_int(min=min_num, max=max_num)
+        if '-tf' in args:
+            entry["true_false"] = fake.boolean()
         if '-ip' in args:
-            entry['ipv4_address'] = ip_generator(fake)
-
+            entry["ipv4_address"] = fake.ipv4_private()
         sample_data.append(entry)
 
-    print(sample_data)
-    
-
-def first_name_generator(fake):
-    return fake.first_name()
-
-def surname_generator(fake):
-    return fake.last_name()
-
-def date_generator(fake):
-    return fake.date()
-
-def random_number_generator(min, max, fake):
-    return fake.random_int(min=min, max=max)
-
-def true_false_generator(fake):
-    return fake.boolean()
-
-def ip_generator(fake):
-    return fake.ipv4_private()
+    # Output
+    if output_to_terminal:
+        print(json.dumps(sample_data))
+    if output_to_json:
+        with open("data.json", "w") as f:
+            json.dump(sample_data, f)
+    else:
+        print("*** Please Use the '-ot' or '-oj' Flags to Output Data ***")
 
 
 if __name__ == "__main__":
