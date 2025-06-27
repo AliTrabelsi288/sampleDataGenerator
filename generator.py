@@ -35,7 +35,7 @@ def generator(*args):
         print("  -sn   : Surname")
         print("  -d    : Date")
         print("  -ip   : IPv4 Address")
-        print("  -rX-Y : Random Number in Range X to Y")
+        print("  -r    : Random Number in Range 0-1000")
         print("  -tf   : True/False")
         print("  -ts   : Timestamp")
         print("  -us   : Username")
@@ -54,15 +54,10 @@ def generator(*args):
         print("Example:\n  python generator.py name-fn surname-sn ip-ip -g5 -ot")
         return
 
-    # Parse generation count and number range
+    # Parse generation count, keys and values and pretty flag
     for arg in args:
         if arg.startswith('-g') and arg[2:].isdigit():
             generate_count = int(arg[2:])
-        elif arg.startswith('-r'):
-            try:
-                min_num, max_num = map(int, arg[2:].split('-'))
-            except ValueError:
-                print("*** Invalid Range for -r. Using Default 0-1000 ***")
         elif '-' in arg and not arg.startswith('-'):
             try:
                 key, val = arg.rsplit('-', 1)
@@ -95,7 +90,7 @@ def generator(*args):
                 entry[key] = fake.last_name()
             elif flag == '-d':
                 entry[key] = fake.date()
-            elif flag.startswith('-r'):
+            elif flag == '-r':
                 entry[key] = fake.random_int(min=min_num, max=max_num)
             elif flag == '-tf':
                 entry[key] = fake.boolean()
@@ -114,6 +109,7 @@ def generator(*args):
 
         sample_data.append(entry)
 
+
     # Output handling
     if output_to_terminal:
         if pretty_print:
@@ -127,7 +123,6 @@ def generator(*args):
                 json.dump(sample_data, f, indent=2)
             else:
                 json.dump(sample_data, f)
-
 
     elif output_to_xml:
         root = ET.Element("records")
